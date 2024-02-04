@@ -5,6 +5,7 @@ import requests
 import secrets
 from bs4 import BeautifulSoup
 import time
+import validators
 
 UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
 
@@ -14,6 +15,7 @@ def create_dir(dirname:str = 'images'):
     if os.path.isdir(new_dir) == False:
         os.mkdir(path=new_dir)
     return new_dir
+
 def generate_link(suffix = None):
     site_prefix = 'https://prnt.sc/'
     if suffix == None:
@@ -34,8 +36,9 @@ def get_img_link(link:str):
     if page.status_code == 200:
         soup = BeautifulSoup(page.content, 'html.parser')
         #print(soup.prettify())
-        img_link = soup.find(id="screenshot-image").get('src')
-        if img_link == None or img_link == '':
+        img_link = soup.find(id="screenshot-image", class_="no-click screenshot-image").get('src')
+        print(f'Image link: {img_link}')
+        if not img_link:
             print('Image not found on the Lightshot page!')
             return 1, 
         img_name = img_link.rpartition('/')[2]
@@ -48,11 +51,17 @@ def get_img_link(link:str):
         return 1,
     else:
         print('Unknown code, maybe redirect: {page.status_code} for {link}')
+        return 1,
+    
 def save_img(img_link:str, img_name:str, new_dir:str):
     print('Accessing image on host...')
     global UserAgent
     with requests.Session():
-        img_page = requests.get(img_link, headers={'User-Agent': UserAgent})
+        if validators.url(img_link) == True:
+            img_page = requests.get(img_link, headers={'User-Agent': UserAgent})
+        else:
+            print('Nonexistant image (broken URL).')
+            return 1
         if img_page.status_code == 200:
             print('Saving image...')
             with open(os.path.join(new_dir, img_name), 'wb') as img:
@@ -71,8 +80,9 @@ def save_img(img_link:str, img_name:str, new_dir:str):
 def main():
     sleep_time_min = 2
     sleep_time_max = 8
+    sleep_time_max -= sleep_time_min
     #min and max inter-cycle timeouts
-    max_iter = 1000
+    max_iter = 10000000
     #how many image pages will be processed
     print('Scraping started')
     img_dir = create_dir('imgs')
@@ -83,9 +93,10 @@ def main():
         img_link, img_name = get_img_link(site_link)
         save_img(img_link, img_name, img_dir)
         print('Cycle complete, timeout waiting...')
-        time.sleep(secrets.randbelow(sleep_time_max-sleep_time_min)+sleep_time_min)
+        time.sleep(secrets.randbelow(sleep_time_max)+sleep_time_min)
     print('Done!')
     return 0
+
 if __name__ == '__main__':
     raise SystemExit(main())
 
