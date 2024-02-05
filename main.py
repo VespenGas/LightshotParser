@@ -78,15 +78,16 @@ def save_img(img_link:str, img_name:str, new_dir:str):
     pass
 
 def main():
-    sleep_time_min = 2
-    sleep_time_max = 8
-    sleep_time_max -= sleep_time_min
+    sleep_time_min = 1
+    sleep_time_max = 4
     #min and max inter-cycle timeouts
     max_iter = 10000000
     #how many image pages will be processed
+    reverse_order = True
+    reverse = 1 if reverse_order == False else -1
     print('Scraping started')
-    img_dir = create_dir('imgs')
-    suffixes = list(range(100000, min(100000+max_iter, 1000000)))
+    img_dir = create_dir('imgs_end' if reverse_order == True else 'imgs')
+    suffixes = list(range(100000, min(100000+max_iter, 1000000)))[::reverse]
     for suffix in suffixes:
         site_link = generate_link(suffix=suffix)
         print(site_link)
