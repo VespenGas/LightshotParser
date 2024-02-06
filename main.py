@@ -33,7 +33,7 @@ def get_img_link(link:str):
         page = requests.get(link, headers={'User-Agent': UserAgent,
                                            'referer': 'https://prnt.sc/'})
         pass
-    if page.status_code == 200:
+    if page.ok:
         soup = BeautifulSoup(page.content, 'html.parser')
         #print(soup.prettify())
         img_link = soup.find(id="screenshot-image", class_="no-click screenshot-image").get('src')
@@ -62,7 +62,7 @@ def save_img(img_link:str, img_name:str, new_dir:str):
         else:
             print('Nonexistant image (broken URL).')
             return 1
-        if img_page.status_code == 200:
+        if img_page.ok:
             print('Saving image...')
             with open(os.path.join(new_dir, img_name), 'wb') as img:
                 img.write(img_page.content)
